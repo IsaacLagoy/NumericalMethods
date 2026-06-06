@@ -96,4 +96,100 @@
 
 # KKT conditions are necessary but not sufficient for optimality in the non-convex case
 # We need some way of distinguishing maxima and saddle points from minima
+# grad^2 f(x^*) > 0 -> local minimum
+# grad^2 f(x^*) < 0 -> local maximum
+# grad^2 f(x^*) is indefinite -> saddle point
+# at the constrained minimum x^*, we only need H to be pos definite on the tangent space of the active constraints
+# T(x^*) = {v : grad h^j(x^*)^T v = 0 \forall j, grad g_i(x^*)^T v = 0 \forall i active}
 
+# if x* is a local min and KKT holds, then the Lagrangian Hessian is positive semidefinite on the tangent space
+# v^T grad^2_{xx} L(x^*, lambda^*, mu^*) v >= 0 \forall v in T(x^*)
+# if KKT holds at x^* and the Lagrangian Hessian is strictly positive definite on the tangent space: 
+# TODO what is the tangent space? what is positive semidefinite?
+# v^T grad^2_{xx} L(x^*, lambda^*, mu^*) v > 0 \forall v in T(x^*)
+# then x^* is a local minimum
+
+# bordered hessian
+# structure matrix that encodes the objective curvature and the constraint gradients
+# \bar H = [0        grad h^T     ]
+#          [grad h   grad^2_{xx} L]
+# TODO how is this handled with multiple constraints?
+
+# the dual function is always concave
+# the dual always underpredicts the primal
+# dual gap is p* - d*
+# strong duality: p* = d*
+
+# primal vs dual
+# primal - minimize f over x (search over original space)
+# fual - maximize over mu, lambda, etc (search over the multiplier space)
+# they solve the same problem but from different perspectives
+# the dual problem's solution is a lower bound on the primal problem's solution
+
+# duality allows us to solve many primal constraints at the same time
+# this is most beneficial for inequality constraints, duality does no simplify things for equality constraints
+# in concavity, weak duality always holds but strong duality usually fails. This means that there is a duality gap and duality is not the infinum of the primal.
+# tight non-convex problems have strong duality, TODO look into this more (active research area)
+# feasible x with f(x) = d(mu, lambda) is provably globally optimal
+
+# dual problem:
+# minimize f(x, y) = (x - 4)^2 + (y - 4)^2
+# with constraints
+# g_1(x, y) = x + y - 4 <= 0
+# g_2(x, y) = -x <= 0
+# g_3(x, y) = -y <= 0
+
+# construct the lagrangian
+# L(x, y, mu) = (x - 4)^2 + (y - 4)^2 + mu_1 (x + y - 4) + mu_2 (-x) + mu_3 (-y)
+
+# dual function - minimize over x and y
+# dL/dx = 2(x - 4) + mu_1 - mu_2 = 0
+# dL/dy = 2(y - 4) + mu_1 - mu_3 = 0
+
+# 2x - 8 + mu_1 - mu_2 = 0
+# 2x = 8 - mu_1 + mu_2
+# x = (8 - mu_1 + mu_2) / 2
+
+# 2y - 8 + mu_1 - mu_3 = 0
+# 2y = 8 - mu_1 + mu_3
+# y = (8 - mu_1 + mu_3) / 2
+
+# substitute back into the lagrangian
+# d(mu) = ( (8 - mu_1 + mu_2) / 2 )^2 + ( (8 - mu_1 + mu_3) / 2 )^2 + mu_1 ( (8 - mu_1 + mu_2) / 2 + (8 - mu_1 + mu_3) / 2 - 4) + mu_2 (- (8 - mu_1 + mu_2) / 2 ) + mu_3 (- (8 - mu_1 + mu_3) / 2 )
+
+# simplify
+# d(mu) = (8 - mu_1 + mu_2)^2 / 4 + (8 - mu_1 + mu_3)^2 / 4 + (mu_1 / 2) * (8 - 2 * mu_1 + mu_2 + mu_3) + (mu_2 / 2) * (mu_1 - 8 - mu_2) + (mu_3 / 2) * (mu_1 - 8 - mu_3)
+
+# take the derivative
+# dd/dmu_1 = -(8 - mu_1 + mu_2) - (8 - mu_1 + mu_3) + 4 = 0
+# dd/dmu_2 = -(8 - mu_1 + mu_2) / 2 = 0
+# dd/dmu_3 = -(8 - mu_1 + mu_3) / 2 = 0
+
+# solve for mu_1, mu_2, mu_3
+# 8 - mu_1 + mu_2 = 0
+# mu_1 = 8 + mu_2
+# 8 - mu_1 + mu_3 = 0
+# mu_1 = 8 + mu_3
+# mu_2 = mu_3
+# -8 + mu_1 - mu_2 - 8 + mu_1 - mu_2 + 4 = 0
+# mu_1 - mu_2 = 6
+# mu_1 = 6 + mu_2
+# mu_2 - mu_1 = -8
+# mu_2 - (6 + mu_2) = -8
+# 2 * mu_2 = -2
+# mu_2 = -1 = mu_3 # but mu >= 0 so the maximum is on the boundary
+# remember, mu >= 0 since we can only push inward or sit on the boundary
+# 0 - mu_1 = -8
+# mu_1 = 8
+
+# plug back into x and y
+# x = (8 - 8 + 0) / 2 = 0
+# y = (8 - 8 + 0) / 2 = 0
+
+# somewhere I messed up lowk
+# mu_1 = 4
+# (x*, y*) = (2, 2)
+# d* = 4(4) - 16/2 = 8
+# p* = f(2, 2) = 8
+# duality gap = p* - d* = 0
+# strong duality holds

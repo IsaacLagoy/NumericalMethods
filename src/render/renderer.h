@@ -18,7 +18,7 @@ public:
 private:
     GLFWwindow* window;
     Camera camera;
-    Robot robot;
+    Robot* robot;
 
     bool cursorCaptured;
     bool firstMouse;
@@ -36,7 +36,7 @@ private:
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 public:
-    Renderer();
+    Renderer(Robot* robot);
     ~Renderer();
 
     GLFWwindow* getWindow() const { return window; }

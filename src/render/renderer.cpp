@@ -15,8 +15,9 @@
 ShaderServer Renderer::shaderServer;
 ObjServer Renderer::objServer;
 
-Renderer::Renderer()
+Renderer::Renderer(Robot* robot)
     : window(nullptr),
+      robot(robot),
       cursorCaptured(false),
       firstMouse(true),
       lastMouseX(0.0),
@@ -146,6 +147,16 @@ void Renderer::keyCallback(GLFWwindow* window, int key, int scancode, int action
     {
         renderer->setCursorCaptured(false);
     }
+
+    if (key == GLFW_KEY_COMMA && action == GLFW_PRESS)
+    {
+        renderer->robot->iterate(-1);
+    }
+
+    if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
+    {
+        renderer->robot->iterate(1);
+    }
 }
 
 void Renderer::processInput(float deltaTime)
@@ -157,7 +168,18 @@ void Renderer::processInput(float deltaTime)
         glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS,
         glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS,
         glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS,
-        deltaTime);
+        deltaTime
+    );
+
+    robot->processInput(
+        glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS,
+        glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS,
+        glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS,
+        glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS,
+        glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS,
+        glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS,
+        deltaTime
+    );
 }
 
 void Renderer::render()
@@ -184,7 +206,7 @@ void Renderer::render()
     glEnableVertexAttribArray(norLoc);
 
     const GLint MVLoc = shader->getUniformLocation("MV");
-    robot.draw(MV, posLoc, norLoc, MVLoc);
+    robot->draw(MV, posLoc, norLoc, MVLoc);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glDisableVertexAttribArray(posLoc);

@@ -4,7 +4,8 @@
 
 int main()
 {
-    Renderer renderer;
+    Robot robot;
+    Renderer renderer(&robot);
     GLFWwindow* window = renderer.getWindow();
     renderer.captureCursor();
 

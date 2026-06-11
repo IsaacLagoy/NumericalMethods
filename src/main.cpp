@@ -1,10 +1,12 @@
 #include "render/renderer.h"
+#include "solver/gn_solver.h"
 
 #include <GLFW/glfw3.h>
 
 int main()
 {
     Robot robot;
+    GaussNewtonSolver solver(&robot);
     Renderer renderer(&robot);
     GLFWwindow* window = renderer.getWindow();
     renderer.captureCursor();
@@ -17,6 +19,9 @@ int main()
         lastFrameTime = currentTime;
 
         renderer.processInput(deltaTime);
+
+        solver.step();
+
         renderer.render();
 
         glfwSwapBuffers(window);

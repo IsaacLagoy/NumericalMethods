@@ -19,6 +19,8 @@
       - Dual Feasibility
       - Complementary Slackness
    * Strong vs Weak Duality
+1) Projection Constraints
+
 
 ### Step Direction
 * Gradient Descent
@@ -33,15 +35,9 @@
 * Dogleg
 
 ### Constraints 
-- getting there
+* Projection Constraints
 
 # TODO
-
-Constraint projection methods
-
-Secular Trust Region
-
-Null space mthods
 
 Conjugate Gradient              ← finish numerical methods
       ↓

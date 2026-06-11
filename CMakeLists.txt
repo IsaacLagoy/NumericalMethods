@@ -17,6 +17,8 @@ add_executable(${PROJECT_NAME}
     src/render/obj_server.cpp
     src/skeleton/bone.cpp
     src/skeleton/robot.cpp
+    src/solver/solver.cpp
+    src/solver/gn_solver.cpp
     src/main.cpp
 )
 

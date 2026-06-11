@@ -17,6 +17,7 @@ Robot::Robot()
         glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
         glm::vec3(1.0f, 1.5f, 1.0f)
     );
+    actuatedJoints.push_back(root);
 
     // Head above torso
     Bone* head = new Bone(

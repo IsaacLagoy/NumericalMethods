@@ -31,12 +31,15 @@ public:
 
     // solver joint control (local tangent deltas, right multiply)
     size_t getActuatedJointCount() const { return actuatedJoints.size(); }
+    const std::vector<Bone*>& getActuatedJoints() const { return actuatedJoints; }
     void applyJointDelta(size_t jointIndex, const glm::vec3& deltaR);
     void applyJointDeltas(const std::vector<glm::vec3>& deltaR);
 
     std::optional<glm::vec3> getWorldPosition(const Bone* bone) const;
     std::vector<glm::vec3> getEndEffectorPositions() const;
     std::vector<glm::vec3> getTargetPositions() const;
+
+    int getEndEffectorCount() const { return endEffectors.size(); }
 };
 
 #endif // ROBOT_H

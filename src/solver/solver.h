@@ -87,4 +87,14 @@ public:
     void reset() override;
 };
 
+class GradientDescentSolver : public Solver {
+private:
+    float stepSize;
+
+public:
+    GradientDescentSolver(Robot* robot, float stepSize);
+    void step() override;
+    void reset() override;
+};
+
 #endif

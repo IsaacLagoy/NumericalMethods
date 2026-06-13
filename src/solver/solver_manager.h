@@ -22,6 +22,7 @@ public:
     void incSolver();
     void decSolver();
     void step();
+    void reset();
 };
 
 #endif

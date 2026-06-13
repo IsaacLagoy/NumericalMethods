@@ -267,7 +267,7 @@ std::vector<glm::vec3> Robot::getEndEffectorPositions() const
 
 void Robot::randomizeTargets()
 {
-    const float radius = 2.0f;
+    const float radius = 3.0f;
     for (EndEffector* endEffector : endEffectors)
     {
         const float u = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);

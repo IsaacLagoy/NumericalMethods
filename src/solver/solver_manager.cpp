@@ -7,6 +7,7 @@ SolverManager::SolverManager(Robot* robot)
 {
     solvers.push_back(NamedSolver{ "Gauss-Newton", new GaussNewtonSolver(robot) });
     solvers.push_back(NamedSolver{ "Levenberg-Marquardt", new LevenbergMarquardtSolver(robot, 1.0f) });
+    solvers.push_back(NamedSolver{ "Gradient Descent", new GradientDescentSolver(robot, 0.01f) });
 }
 
 SolverManager::~SolverManager()
@@ -29,4 +30,9 @@ void SolverManager::decSolver()
 void SolverManager::step()
 {
     solvers[currentSolverIndex].solver->step();
+}
+
+void SolverManager::reset()
+{
+    solvers[currentSolverIndex].solver->reset();
 }

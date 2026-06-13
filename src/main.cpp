@@ -15,6 +15,7 @@ int main()
     while (!glfwWindowShouldClose(window)) 
     {
         const double currentTime = glfwGetTime();
+        if (0.016f + lastFrameTime > currentTime) continue;
         const float deltaTime = static_cast<float>(currentTime - lastFrameTime);
         lastFrameTime = currentTime;
 

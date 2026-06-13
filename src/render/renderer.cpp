@@ -172,7 +172,13 @@ void Renderer::keyCallback(GLFWwindow* window, int key, int scancode, int action
 
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
     {
+        renderer->solverManager->reset();
         renderer->robot->randomizeTargets();
+    }
+
+    if (key == GLFW_KEY_T && action == GLFW_PRESS)
+    {
+        renderer->solverManager->reset();
     }
 }
 
@@ -189,8 +195,8 @@ void Renderer::processInput(float deltaTime)
     );
 
     robot->processInput(
-        glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS,
         glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS,
+        glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS,
         glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS,
         glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS,
         glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS,

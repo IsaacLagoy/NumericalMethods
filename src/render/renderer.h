@@ -9,6 +9,7 @@
 
 class ShaderServer;
 class ObjServer;
+class SolverManager;
 
 class Renderer {
 public:
@@ -19,6 +20,7 @@ private:
     GLFWwindow* window;
     Camera camera;
     Robot* robot;
+    SolverManager* solverManager;
 
     bool cursorCaptured;
     bool firstMouse;
@@ -36,7 +38,7 @@ private:
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 public:
-    Renderer(Robot* robot);
+    Renderer(Robot* robot, SolverManager* solverManager);
     ~Renderer();
 
     GLFWwindow* getWindow() const { return window; }

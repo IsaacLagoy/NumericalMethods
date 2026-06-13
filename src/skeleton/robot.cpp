@@ -3,6 +3,8 @@
 
 #include <algorithm>
 #include <cfloat>
+#include <cmath>
+#include <cstdlib>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
@@ -261,4 +263,24 @@ std::vector<glm::vec3> Robot::getEndEffectorPositions() const
         positions.push_back(getWorldPosition(endEffector).value());
     }
     return positions;
+}
+
+void Robot::randomizeTargets()
+{
+    const float radius = 2.0f;
+    for (EndEffector* endEffector : endEffectors)
+    {
+        const float u = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        const float v = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        const float w = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        const float theta = 2.0f * static_cast<float>(M_PI) * u;
+        const float phi = std::acos(2.0f * v - 1.0f);
+        const float r = radius * std::cbrt(w);
+
+        endEffector->setTargetPos(glm::vec3(
+            r * std::sin(phi) * std::cos(theta),
+            r * std::sin(phi) * std::sin(theta),
+            r * std::cos(phi)
+        ));
+    }
 }

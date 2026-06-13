@@ -40,6 +40,8 @@ public:
     std::vector<glm::vec3> getTargetPositions() const;
 
     int getEndEffectorCount() const { return endEffectors.size(); }
+
+    void randomizeTargets();
 };
 
 #endif // ROBOT_H

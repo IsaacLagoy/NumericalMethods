@@ -3,6 +3,7 @@
 #include "obj_server.h"
 #include "matrix_stack.h"
 #include "GLSL.h"
+#include "../solver/solver_manager.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -15,9 +16,10 @@
 ShaderServer Renderer::shaderServer;
 ObjServer Renderer::objServer;
 
-Renderer::Renderer(Robot* robot)
+Renderer::Renderer(Robot* robot, SolverManager* solverManager)
     : window(nullptr),
       robot(robot),
+      solverManager(solverManager),
       cursorCaptured(false),
       firstMouse(true),
       lastMouseX(0.0),
@@ -134,7 +136,7 @@ void Renderer::mouseButtonCallback(GLFWwindow* window, int button, int action, i
     auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !renderer->cursorCaptured) 
     {
-        renderer->setCursorCaptured(true);
+        renderer->setCursorCaptured(true);  
     }
 }
 
@@ -156,6 +158,21 @@ void Renderer::keyCallback(GLFWwindow* window, int key, int scancode, int action
     if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
     {
         renderer->robot->iterate(1);
+    }
+
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS)
+    {
+        renderer->solverManager->incSolver();
+    }
+
+    if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+    {
+        renderer->solverManager->decSolver();
+    }
+
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+    {
+        renderer->robot->randomizeTargets();
     }
 }
 

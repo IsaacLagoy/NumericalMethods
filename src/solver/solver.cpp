@@ -27,17 +27,69 @@ glm::vec3 Solver::axisVector(int axis) const
     }
 }
 
-Eigen::VectorXf Solver::stackEndEffectorPositions(const std::vector<glm::vec3>& positions)
+Eigen::VectorXf Solver::stackVec3s(const std::vector<glm::vec3>& vec3s)
 {
     // flatten [vec3, vec3, ...] into [x0,y0,z0, x1,y1,z1, ...] for Eigen math.
-    Eigen::VectorXf stacked(static_cast<Eigen::Index>(positions.size() * 3));
-    for (size_t i = 0; i < positions.size(); ++i)
+    Eigen::VectorXf stacked(static_cast<Eigen::Index>(vec3s.size() * 3));
+    for (size_t i = 0; i < vec3s.size(); ++i)
     {
-        stacked(3 * static_cast<Eigen::Index>(i) + 0) = positions[i].x;
-        stacked(3 * static_cast<Eigen::Index>(i) + 1) = positions[i].y;
-        stacked(3 * static_cast<Eigen::Index>(i) + 2) = positions[i].z;
+        stacked(3 * static_cast<Eigen::Index>(i) + 0) = vec3s[i].x;
+        stacked(3 * static_cast<Eigen::Index>(i) + 1) = vec3s[i].y;
+        stacked(3 * static_cast<Eigen::Index>(i) + 2) = vec3s[i].z;
     }
     return stacked;
+}
+
+std::vector<glm::vec3> Solver::unstackVec3s(const Eigen::VectorXf& stacked)
+{
+    const size_t count = static_cast<size_t>(stacked.size() / 3);
+    std::vector<glm::vec3> vec3s(count);
+    for (size_t i = 0; i < count; ++i)
+    {
+        vec3s[i] = glm::vec3(
+            stacked(3 * static_cast<Eigen::Index>(i) + 0),
+            stacked(3 * static_cast<Eigen::Index>(i) + 1),
+            stacked(3 * static_cast<Eigen::Index>(i) + 2)
+        );
+    }
+    return vec3s;
+}
+
+Eigen::VectorXf Solver::computeResidual(
+    const std::vector<glm::vec3>& eePositions,
+    const std::vector<glm::vec3>& targetPositions)
+{
+    // one residual row block per end-effector (positive => EE should move toward target).
+    const int n = static_cast<int>(eePositions.size());
+    Eigen::VectorXf residual(3 * n);
+    for (int ee = 0; ee < n; ++ee)
+    {
+        residual(3 * ee + 0) = targetPositions[ee].x - eePositions[ee].x;
+        residual(3 * ee + 1) = targetPositions[ee].y - eePositions[ee].y;
+        residual(3 * ee + 2) = targetPositions[ee].z - eePositions[ee].z;
+    }
+    return residual;
+}
+
+std::vector<glm::quat> Solver::saveActuatedRotations() const
+{
+    const auto& actuatedJoints = robot->getActuatedJoints();
+    std::vector<glm::quat> saved;
+    saved.reserve(actuatedJoints.size());
+    for (const Bone* joint : actuatedJoints)
+    {
+        saved.push_back(joint->getRot());
+    }
+    return saved;
+}
+
+void Solver::restoreActuatedRotations(const std::vector<glm::quat>& saved) const
+{
+    auto& actuatedJoints = robot->getActuatedJoints();
+    for (size_t i = 0; i < saved.size(); ++i)
+    {
+        actuatedJoints[i]->setRot(saved[i]);
+    }
 }
 
 // ------------------------------------------------------------
@@ -46,49 +98,53 @@ Eigen::VectorXf Solver::stackEndEffectorPositions(const std::vector<glm::vec3>& 
 
 float Solver::currCost() const
 {
-    // compute residual MSE
-    const Eigen::VectorXf residual = currResidual();
+    const Eigen::VectorXf residual = computeResidual();
     return residual.squaredNorm() / residual.size();
 }
 
-Eigen::VectorXf Solver::currResidual() const
+float Solver::currCost(const Eigen::VectorXf& jointDelta) const
 {
-    // one residual row block per end-effector (positive => EE should move toward target).
-    const int rows = this->rows();
-    Eigen::VectorXf residual = Eigen::VectorXf::Zero(rows);
+    const Eigen::VectorXf residual = computeResidual(jointDelta);
+    return residual.squaredNorm() / residual.size();
+}
 
-    // read current FK positions and fixed world-space targets (zipped by index).
-    const std::vector<glm::vec3> endEffectorPositions = robot->getEndEffectorPositions();
-    const std::vector<glm::vec3> targetPositions = robot->getTargetPositions();
-    for (int i = 0; i < rows; i += 3)
+Eigen::VectorXf Solver::computeResidual() const
+{
+    return computeResidual(
+        robot->getEndEffectorPositions(),
+        robot->getTargetPositions()
+    );
+}
+
+Eigen::VectorXf Solver::computeResidual(const Eigen::VectorXf& jointDelta) const
+{
+    if (jointDelta.size() == 0)
     {
-        const int ee = i / 3;
-        residual(i + 0) = targetPositions[ee].x - endEffectorPositions[ee].x;
-        residual(i + 1) = targetPositions[ee].y - endEffectorPositions[ee].y;
-        residual(i + 2) = targetPositions[ee].z - endEffectorPositions[ee].z;
+        return computeResidual();
     }
 
+    const std::vector<glm::quat> saved = saveActuatedRotations();
+    robot->applyJointDeltas(unstackVec3s(jointDelta));
+    const Eigen::VectorXf residual = computeResidual(
+        robot->getEndEffectorPositions(),
+        robot->getTargetPositions()
+    );
+    restoreActuatedRotations(saved);
     return residual;
 }
 
 Eigen::MatrixXf Solver::currJacobian() const
 {
-    // J: how each local joint tangent axis moves all EE world positions.
+    // J: residual Jacobian dr/d(delta), where r = target - ee.
     const auto& actuatedJoints = robot->getActuatedJoints();
     const int rows = this->rows();
     const int cols = static_cast<int>(actuatedJoints.size() * 3);
 
     // save pose once so finite-difference columns can restore without copying the robot
-    // copied once here instead of in the preturb function
-    std::vector<glm::quat> savedRotations;
-    savedRotations.reserve(actuatedJoints.size());
-    for (const Bone* joint : actuatedJoints)
-    {
-        savedRotations.push_back(joint->getRot());
-    }
+    const std::vector<glm::quat> savedRotations = saveActuatedRotations();
 
     // baseline stacked EE positions at the current (unperturbed) configuration.
-    const Eigen::VectorXf x0 = stackEndEffectorPositions(robot->getEndEffectorPositions());
+    const Eigen::VectorXf x0 = stackVec3s(robot->getEndEffectorPositions());
 
     // fill one column per (joint, local axis) via forward finite differencing.
     Eigen::MatrixXf jacobian = Eigen::MatrixXf::Zero(rows, cols);
@@ -105,6 +161,12 @@ Eigen::MatrixXf Solver::currJacobian() const
     return jacobian;
 }
 
+Eigen::MatrixXf Solver::currHessianJTJ() const
+{
+    const Eigen::MatrixXf jacobian = currJacobian();
+    return jacobian.transpose() * jacobian;
+}
+
 // ------------------------------------------------------------
 // Perturbation
 // ------------------------------------------------------------
@@ -119,15 +181,11 @@ Eigen::VectorXf Solver::perturbColumn(
     robot->applyJointDelta(jointIndex, axisVector(axis) * MEASUREMENT_EPSILON);
 
     // measure how all end-effector positions changed after the nudge.
-    const Eigen::VectorXf x1 = stackEndEffectorPositions(robot->getEndEffectorPositions());
+    const Eigen::VectorXf x1 = stackVec3s(robot->getEndEffectorPositions());
 
     // put the skeleton back so the caller's robot state is unchanged after Jacobian build.
-    auto& actuatedJoints = robot->getActuatedJoints();
-    for (size_t i = 0; i < savedRotations.size(); ++i)
-    {
-        actuatedJoints[i]->setRot(savedRotations[i]);
-    }
+    restoreActuatedRotations(savedRotations);
 
-    // finite-difference estimate of d x_ee / d delta_r for this column.
-    return (x1 - x0) / MEASUREMENT_EPSILON;
+    // dr/d(delta) = -d(ee)/d(delta) because r = target - ee.
+    return -(x1 - x0) / MEASUREMENT_EPSILON;
 }

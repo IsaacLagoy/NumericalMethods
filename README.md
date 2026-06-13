@@ -36,6 +36,7 @@
 
 ### Constraints 
 * Projection Constraints
+* Null Space Methods
 
 # TODO
 

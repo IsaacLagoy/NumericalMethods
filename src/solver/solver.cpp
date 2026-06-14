@@ -57,8 +57,8 @@ std::vector<glm::vec3> Solver::unstackVec3s(const Eigen::VectorXf& stacked)
 
 Eigen::VectorXf Solver::computeResidual(
     const std::vector<glm::vec3>& eePositions,
-    const std::vector<glm::vec3>& targetPositions)
-{
+    const std::vector<glm::vec3>& targetPositions
+) {
     // one residual row block per end-effector (positive => EE should move toward target).
     const int n = static_cast<int>(eePositions.size());
     Eigen::VectorXf residual(3 * n);
@@ -96,13 +96,13 @@ void Solver::restoreActuatedRotations(const std::vector<glm::quat>& saved) const
 // Set up
 // ------------------------------------------------------------
 
-float Solver::currCost() const
+float Solver::computeCost() const
 {
     const Eigen::VectorXf residual = computeResidual();
     return residual.squaredNorm() / residual.size();
 }
 
-float Solver::currCost(const Eigen::VectorXf& jointDelta) const
+float Solver::computeCost(const Eigen::VectorXf& jointDelta) const
 {
     const Eigen::VectorXf residual = computeResidual(jointDelta);
     return residual.squaredNorm() / residual.size();
@@ -118,10 +118,7 @@ Eigen::VectorXf Solver::computeResidual() const
 
 Eigen::VectorXf Solver::computeResidual(const Eigen::VectorXf& jointDelta) const
 {
-    if (jointDelta.size() == 0)
-    {
-        return computeResidual();
-    }
+    if (jointDelta.size() == 0) throw std::invalid_argument("jointDelta is empty");
 
     const std::vector<glm::quat> saved = saveActuatedRotations();
     robot->applyJointDeltas(unstackVec3s(jointDelta));
@@ -133,7 +130,7 @@ Eigen::VectorXf Solver::computeResidual(const Eigen::VectorXf& jointDelta) const
     return residual;
 }
 
-Eigen::MatrixXf Solver::currJacobian() const
+Eigen::MatrixXf Solver::computeJacobian() const
 {
     // J: residual Jacobian dr/d(delta), where r = target - ee.
     const auto& actuatedJoints = robot->getActuatedJoints();
@@ -161,10 +158,51 @@ Eigen::MatrixXf Solver::currJacobian() const
     return jacobian;
 }
 
-Eigen::MatrixXf Solver::currHessianJTJ() const
+Eigen::MatrixXf Solver::computeJacobian(const Eigen::VectorXf& jointDelta) const
 {
-    const Eigen::MatrixXf jacobian = currJacobian();
+    if (jointDelta.size() == 0) throw std::invalid_argument("jointDelta is empty");
+
+    const std::vector<glm::quat> saved = saveActuatedRotations();
+    robot->applyJointDeltas(unstackVec3s(jointDelta));
+    const Eigen::MatrixXf jacobian = computeJacobian();
+    restoreActuatedRotations(saved);
+    return jacobian;
+}
+
+Eigen::MatrixXf Solver::computeHessianJTJ() const
+{
+    const Eigen::MatrixXf jacobian = computeJacobian();
     return jacobian.transpose() * jacobian;
+}
+
+Eigen::MatrixXf Solver::computeHessianJTJ(const Eigen::VectorXf& jointDelta) const
+{
+    if (jointDelta.size() == 0) throw std::invalid_argument("jointDelta is empty");
+
+    const Eigen::MatrixXf jacobian = computeJacobian(jointDelta);
+    return jacobian.transpose() * jacobian;
+}
+
+Eigen::VectorXf Solver::computeGradient(
+    const Eigen::MatrixXf& jacobian,
+    const Eigen::VectorXf& residual
+) {
+    return (2.0f / static_cast<float>(residual.size())) * jacobian.transpose() * residual;
+}
+
+Eigen::VectorXf Solver::computeGradient() const
+{
+    return computeGradient(computeJacobian(), computeResidual());
+}
+
+Eigen::VectorXf Solver::computeGradient(const Eigen::VectorXf& jointDelta) const
+{
+    if (jointDelta.size() == 0)
+    {
+        return computeGradient();
+    }
+
+    return computeGradient(computeJacobian(jointDelta), computeResidual(jointDelta));
 }
 
 // ------------------------------------------------------------

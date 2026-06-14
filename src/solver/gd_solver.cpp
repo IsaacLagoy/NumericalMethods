@@ -7,12 +7,9 @@ GradientDescentSolver::GradientDescentSolver(Robot* robot, float stepSize) :
 
 void GradientDescentSolver::step()
 {
-    const Eigen::VectorXf residual = computeResidual();
-    if (residual.norm() < COST_EPSILON) return;
+    if (computeCost() < COST_EPSILON) return;
 
-    const Eigen::MatrixXf jacobian = currJacobian();
-    const Eigen::VectorXf gradient = jacobian.transpose() * residual;
-    const Eigen::VectorXf delta = -stepSize * gradient;
+    const Eigen::VectorXf delta = -stepSize * computeGradient();
     robot->applyJointDeltas(unstackVec3s(delta));
 }
 

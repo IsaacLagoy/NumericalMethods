@@ -8,12 +8,12 @@ LevenbergMarquardtSolver::LevenbergMarquardtSolver(Robot* robot, float initMu) :
 
 void LevenbergMarquardtSolver::step()
 {
-    const Eigen::VectorXf residual = computeResidual();
-    if (residual.norm() < COST_EPSILON) return;
+    if (computeCost() < COST_EPSILON) return;
 
     // compute the variable delta
-    const Eigen::MatrixXf jacobian = currJacobian();
-    const Eigen::MatrixXf jtj = currHessianJTJ();
+    const Eigen::VectorXf residual = computeResidual();
+    const Eigen::MatrixXf jacobian = computeJacobian();
+    const Eigen::MatrixXf jtj = computeHessianJTJ();
     const int dof = jacobian.cols();
     const Eigen::MatrixXf lhs = jtj + mu * Eigen::MatrixXf::Identity(dof, dof);
     const Eigen::VectorXf rhs = -jacobian.transpose() * residual;

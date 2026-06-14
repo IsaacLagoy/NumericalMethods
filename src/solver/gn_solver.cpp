@@ -2,10 +2,10 @@
 
 void GaussNewtonSolver::step()
 {
-    const Eigen::VectorXf residual = computeResidual();
-    if (residual.norm() < COST_EPSILON) return;
+    if (computeCost() < COST_EPSILON) return;
 
-    const Eigen::MatrixXf jacobian = currJacobian();
+    const Eigen::VectorXf residual = computeResidual();
+    const Eigen::MatrixXf jacobian = computeJacobian();
     const int dof = jacobian.cols();
 
     // Damped Gauss-Newton: (J^T J + λI) p = -J^T r

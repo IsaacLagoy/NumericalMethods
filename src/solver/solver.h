@@ -29,20 +29,30 @@ public:
     virtual void step() = 0;
     virtual void reset() = 0;
 
-    float currCost() const;
-    float currCost(const Eigen::VectorXf& jointDelta) const;
+    float computeCost() const;
+    float computeCost(const Eigen::VectorXf& jointDelta) const;
 
     // length is the number of end effectors * 3
     Eigen::VectorXf computeResidual() const;
     Eigen::VectorXf computeResidual(const Eigen::VectorXf& jointDelta) const;
     static Eigen::VectorXf computeResidual(
-        const std::vector<glm::vec3>& eePositions,
+        const std::vector<glm::vec3>& eePositions, 
         const std::vector<glm::vec3>& targetPositions
     );
 
     // J = dr/d(delta); residual r = target - ee, so r(delta + p) ~= r + Jp
-    Eigen::MatrixXf currJacobian() const;
-    Eigen::MatrixXf currHessianJTJ() const;
+    Eigen::MatrixXf computeJacobian() const;
+    Eigen::MatrixXf computeJacobian(const Eigen::VectorXf& jointDelta) const;
+
+    Eigen::MatrixXf computeHessianJTJ() const;
+    Eigen::MatrixXf computeHessianJTJ(const Eigen::VectorXf& jointDelta) const;
+
+    Eigen::VectorXf computeGradient() const;
+    Eigen::VectorXf computeGradient(const Eigen::VectorXf& jointDelta) const;
+    static Eigen::VectorXf computeGradient(
+        const Eigen::MatrixXf& jacobian,
+        const Eigen::VectorXf& residual
+    );
 
 private:
     glm::vec3 axisVector(int axis) const;
@@ -87,12 +97,25 @@ public:
     void reset() override;
 };
 
+// Gradient Descent
 class GradientDescentSolver : public Solver {
 private:
     float stepSize;
 
 public:
     GradientDescentSolver(Robot* robot, float stepSize);
+    void step() override;
+    void reset() override;
+};
+
+// Quasi-Newton
+class QuasiNewtonSolver : public Solver {
+private:
+    Eigen::VectorXf x_k;
+    Eigen::MatrixXf B_k_inv;
+
+public:
+    QuasiNewtonSolver(Robot* robot);
     void step() override;
     void reset() override;
 };

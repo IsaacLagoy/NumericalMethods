@@ -22,7 +22,10 @@ add_executable(${PROJECT_NAME}
     src/solver/solver.cpp
     src/solver/gn_solver.cpp
     src/solver/lm_solver.cpp
-    src/solver/grad_desc.cpp
+    src/solver/gd_solver.cpp
+    src/solver/qn_solver.cpp
+    src/solver/armijo_line.cpp
+    src/solver/wolfe_line.cpp
     src/solver/solver_manager.cpp
 
     src/main.cpp

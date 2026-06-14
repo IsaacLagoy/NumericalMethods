@@ -108,16 +108,4 @@ public:
     void reset() override;
 };
 
-// Quasi-Newton
-class QuasiNewtonSolver : public Solver {
-private:
-    Eigen::VectorXf x_k;
-    Eigen::MatrixXf B_k_inv;
-
-public:
-    QuasiNewtonSolver(Robot* robot);
-    void step() override;
-    void reset() override;
-};
-
 #endif

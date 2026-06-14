@@ -4,7 +4,7 @@
 #include "solver.h"
 
 namespace {
-    constexpr int ARMIJO_MAX_ITERATIONS = 100;
+    constexpr int ARMIJO_MAX_ITERATIONS = 10;
     constexpr float ARMIJO_GAMMA = 0.5f;
 }
 
@@ -46,7 +46,7 @@ public:
     virtual float search(float fOld, const Eigen::VectorXf& direction) override;
 
 private:
-    std::pair<float, float> bracket(float fOld, const Eigen::VectorXf& direction);
+    bool bracket(float fOld, const Eigen::VectorXf& direction, float& alphaLo, float& alphaHi);
     float zoom(float fOld, const Eigen::VectorXf& direction, float alphaLo, float alphaHi);
     float cubic_interpolation(float alphaLo, float alphaHi, float fLo, float fHi, float slopeLo, float slopeHi);
 };

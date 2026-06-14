@@ -19,12 +19,12 @@ float ArmijoLineSearch::search(float fOld, const Eigen::VectorXf& direction)
 {
     // backtrack until we find a valid alpha
     float alpha = 1.0f;
-    float slope = direction.dot(computeGradient());
+    float slope = direction.dot(computeGradient()); // = grad F^T * direction
     
     for (int i = 0; i < ARMIJO_MAX_ITERATIONS; i++) 
     {
         const float fNew = computeCost(alpha * direction);
-        if (fNew <= fOld + c1 * alpha * slope) 
+        if (fNew <= fOld + c1 * alpha * slope) // Armijo condition
         {
             return alpha;
         }

@@ -24,6 +24,7 @@ add_executable(${PROJECT_NAME}
     src/solver/lm_solver.cpp
     src/solver/gd_solver.cpp
     src/solver/qn_solver.cpp
+    src/solver/lbfgs_solver.cpp
     src/solver/armijo_line.cpp
     src/solver/wolfe_line.cpp
     src/solver/solver_manager.cpp
